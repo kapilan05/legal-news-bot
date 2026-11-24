@@ -1,45 +1,51 @@
 name: Daily Legal News Video
+
 on:
   schedule:
-    - cron: '0 4 * * *' # Runs daily at 9:30 AM IST
+    - cron: '0 4 * * *' # Runs daily at 9:30 AM IST (04:00 UTC)
   workflow_dispatch:     # Manual 1-click run
 
 permissions:
-  contents: write        # Needed to save posted.txt history
+  contents: write        # Needed to push posted.txt updates
 
 jobs:
   build-video:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Python & System Dependencies
+      - name: Install FFmpeg and ImageMagick
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg imagemagick
-          sudo find /etc/ImageMagick* -name "policy.xml" -exec sed -i 's/none/read,write/g' {} +
+          sudo apt-get install -y ffmpeg imagemagick fonts-dejavu-core
+          sudo sed -i 's/domain="path" rights="none"/domain="path" rights="read|write"/g' /etc/ImageMagick-*/policy.xml || true
 
-
-      - name: Install Python Packages
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install -r requirements.txt
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
 
       - name: Generate Legal Video
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.AIzaSyBSX3mjT0TZUJNSk6s68RKveVCiykitbHQ }}
+          PIXABAY_API_KEY: ${{ secrets.58812422-c0efb3d3a7f26cf017bdaa407 }}
         run: python generate.py
 
       - name: Save Posted History
         run: |
           if [ -f posted.txt ]; then
             git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@://github.com"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add posted.txt
-            git commit -m "Log posted legal article" || exit 0
-            git push
+            if ! git diff --staged --quiet; then
+              git commit -m "Log posted legal article"
+              git pull --rebase origin main
+              git push
+            fi
           fi
 
       - name: Upload Finished Video
@@ -48,3 +54,4 @@ jobs:
         with:
           name: legal-news-short
           path: final_legal_short.mp4
+          retention-days: 7
