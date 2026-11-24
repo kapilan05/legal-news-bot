@@ -1,0 +1,7 @@
+feedparser
+google-genai
+edge-tts
+faster-whisper
+requests
+moviepy==1.0.3
+Pillow
