@@ -5,6 +5,8 @@ import feedparser
 import edge_tts
 from faster_whisper import WhisperModel
 from PIL import Image, ImageDraw, ImageFont
+if not hasattr(Image, "ANTIALIAS"):
+    Image.ANTIALIAS = Image.Resampling.LANCZOS
 from moviepy.editor import (
     ImageClip,
     AudioFileClip,
