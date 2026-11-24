@@ -17,7 +17,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg imagemagick
-          sudo sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml
+          sudo find /etc/ImageMagick* -name "policy.xml" -exec sed -i 's/none/read,write/g' {} +
+
 
       - name: Install Python Packages
         uses: actions/setup-python@v5
