@@ -1,0 +1,49 @@
+name: Daily Legal News Video
+on:
+  schedule:
+    - cron: '0 4 * * *' # Runs daily at 9:30 AM IST
+  workflow_dispatch:     # Manual 1-click run
+
+permissions:
+  contents: write        # Needed to save posted.txt history
+
+jobs:
+  build-video:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python & System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg imagemagick
+          sudo sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml
+
+      - name: Install Python Packages
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+
+      - name: Generate Legal Video
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+        run: python generate.py
+
+      - name: Save Posted History
+        run: |
+          if [ -f posted.txt ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@://github.com"
+            git add posted.txt
+            git commit -m "Log posted legal article" || exit 0
+            git push
+          fi
+
+      - name: Upload Finished Video
+        if: hashFiles('final_legal_short.mp4') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: legal-news-short
+          path: final_legal_short.mp4
