@@ -1,5 +1,6 @@
 feedparser
-openai
+google-genai
+ddgs
 edge-tts
 faster-whisper
 requests
